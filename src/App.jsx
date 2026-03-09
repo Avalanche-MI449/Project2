@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import SetlistApiComponent from './setlistAPI'
+import Events from './Events.jsx'
 
 // Franz Ferdinand
 
@@ -29,6 +30,9 @@ function App() {
 
       <SetlistApiComponent artistName={artist} />
       {/* <SetlistComponent artistName="The Beatles" /> */}
+
+      <Events />
+
     </>
   )
 }
