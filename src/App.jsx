@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import SetlistApiComponent from './setlistAPI'
+import MusicPreviewWidget from "./MusicPreviewWidget";
 import Events from './Events.jsx'
 import Navbar from './Navbar.jsx'
 
