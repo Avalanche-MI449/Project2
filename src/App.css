@@ -130,3 +130,15 @@
   color: #ffffff;
   border: 1px solid #ffffff;
 }
+
+.music-widget {
+  border: 1px solid #ddd;
+  padding: 20px;
+  width: 300px;
+  border-radius: 10px;
+}
+
+.song-preview img {
+  width: 100px;
+  border-radius: 8px;
+}
