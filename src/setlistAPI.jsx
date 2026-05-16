@@ -17,7 +17,7 @@ const formatEventDate = (eventDate) => {
     return `${month}-${day}-${year}`;
 };
 
-const scrollableListStyleClass = "scrollable-list";
+const itemsPerPage = 8;
 
 const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
     // This will hold the values for setlisst, which we will get from the API 
@@ -27,6 +27,26 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
     const [setlists, setSetlists] = useState([]);
     const [setlistDate, setSetlistDate] = useState("");
     const [songs, setSongs] = useState([]);
+    const [page, setPage] = useState(0);
+
+    const currentItems = !artistMBID
+        ? artists
+        : !setlistDate
+            ? setlists
+            : songs;
+
+    const totalPages = Math.max(1, Math.ceil(currentItems.length / itemsPerPage));
+    const pageStart = page * itemsPerPage;
+    const pageEnd = pageStart + itemsPerPage;
+    const pagedItems = currentItems.slice(pageStart, pageEnd);
+
+    const goPrevPage = () => {
+        setPage((currentPage) => Math.max(0, currentPage - 1));
+    };
+
+    const goNextPage = () => {
+        setPage((currentPage) => Math.min(totalPages - 1, currentPage + 1));
+    };
 
 
 
@@ -60,6 +80,7 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
                 setSetlists([]);
                 setSetlistDate("");
                 setSongs([]);
+                setPage(0);
 
             } catch(error) {
                 console.error('Error fetching setlist data:', error);
@@ -93,6 +114,7 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
                 setSetlists(Array.isArray(response.data.setlist) ? response.data.setlist : []);
                 setSetlistDate("");
                 setSongs([]);
+                setPage(0);
 
             } catch (error) {
                 console.error('Error fetching setlist data:', error);
@@ -133,6 +155,7 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
                 });
 
                 setSongs(extractedSongs);
+                setPage(0);
 
             } catch (error) {
                 console.error('Error fetching songs data:', error);
@@ -157,31 +180,38 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
     // Display the possible artists the user can pick 
     if (!artistMBID) {
         return (
-            <div>
+            <div className="setlist-panel-body">
                 <div className="panel-heading">
-                    <h2 className="panel-title">Possible Setlists</h2>
+                    <h3 className="panel-title">Possible Setlists</h3>
                 </div>
-                <ul className={scrollableListStyleClass}>
-                    {artists.map(artist => (
-                        <li key={artist.mbid || artist.name}>
-                            <button
-                                onClick={() => {
-                                    if (!artist.mbid) {
-                                        return;
-                                    }
-                                    setArtistMBID(artist.mbid);
-                                    setSelectedArtistLabel(artist.name || "");
-                                    setSetlistDate("");
-                                    setSongs([]);
-                                    if (onArtistSelect) onArtistSelect(artist.name || "");
-                                }}
-                                disabled={!artist.mbid}
-                            >
-                                {artist.name}
-                            </button>
-                        </li>
+                <div className="button-grid">
+                    {pagedItems.map(artist => (
+                        <button
+                            key={artist.mbid || artist.name}
+                            onClick={() => {
+                                if (!artist.mbid) {
+                                    return;
+                                }
+                                setArtistMBID(artist.mbid);
+                                setSelectedArtistLabel(artist.name || "");
+                                setSetlistDate("");
+                                setSongs([]);
+                                setPage(0);
+                                if (onArtistSelect) onArtistSelect(artist.name || "");
+                            }}
+                            disabled={!artist.mbid}
+                        >
+                            {artist.name}
+                        </button>
                     ))}
-                </ul>
+                </div>
+                {artists.length > itemsPerPage && (
+                    <div className="pager-controls">
+                        <button onClick={goPrevPage} disabled={page === 0}>Prev</button>
+                        <span>Page {page + 1} of {totalPages}</span>
+                        <button onClick={goNextPage} disabled={page >= totalPages - 1}>Next</button>
+                    </div>
+                )}
             </div>
         );
     }
@@ -189,8 +219,10 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
     // Display the possible setlists from the artist the user picked
     if (!setlistDate) {
         return (
-            <div>
-                <h2>Possible Setlists{selectedArtistLabel ? ` for ${selectedArtistLabel}` : ""}:</h2>
+            <div className="setlist-panel-body">
+                <div className="panel-heading">
+                    <h3 className="panel-title">Possible Setlists{selectedArtistLabel ? ` for ${selectedArtistLabel}` : ""}</h3>
+                </div>
                 <button
                     onClick={() => {
                         setArtistMBID("");
@@ -198,21 +230,31 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
                         setSetlists([]);
                         setSetlistDate("");
                         setSongs([]);
+                        setPage(0);
                     }}
                 >
                     Back to Artists
                 </button>
-
                 {setlists.length > 0 ? (
-                    <ul className={scrollableListStyleClass}>
-                        {setlists.map(setlist => (
-                            <li key={setlist.id}>
-                                <button onClick={ () => setSetlistDate(setlist.eventDate) }><p>{formatEventDate(setlist.eventDate)}</p></button>
-                            </li>
+                    <div className="button-grid">
+                        {pagedItems.map(setlist => (
+                            <button key={setlist.id} onClick={ () => {
+                                setSetlistDate(setlist.eventDate);
+                                setPage(0);
+                            }}>
+                                {formatEventDate(setlist.eventDate)}
+                            </button>
                         ))}
-                    </ul>
+                    </div>
                 ) : (
                     <p>No setlists found for this artist.</p>
+                )}
+                {setlists.length > itemsPerPage && (
+                    <div className="pager-controls">
+                        <button onClick={goPrevPage} disabled={page === 0}>Prev</button>
+                        <span>Page {page + 1} of {totalPages}</span>
+                        <button onClick={goNextPage} disabled={page >= totalPages - 1}>Next</button>
+                    </div>
                 )}
             </div>
         );
@@ -220,12 +262,15 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
 
     if (setlistDate) {
         return (
-            <div>
-                <p>Setlist for {selectedArtistLabel || artistName} on {formatEventDate(setlistDate)}:</p>
+            <div className="setlist-panel-body">
+                <div className="panel-heading">
+                    <h3 className="panel-title">Setlist for {selectedArtistLabel || artistName} on {formatEventDate(setlistDate)}</h3>
+                </div>
                 <button
                     onClick={() => {
                         setSetlistDate("");
                         setSongs([]);
+                        setPage(0);
                     }}
                 >
                     Back to Dates
@@ -237,19 +282,26 @@ const SetlistApiComponent = ({ artistName, onArtistSelect }) => {
                         setSetlists([]);
                         setSetlistDate("");
                         setSongs([]);
+                        setPage(0);
                     }}
                 >
                     Back to Artists
                 </button>
-
                 {songs.length > 0 ? (
-                    <ul className={scrollableListStyleClass}>
-                        {songs.map((song, index) => (
-                            <li key={index}>{song}</li>
+                    <div className="button-grid">
+                        {pagedItems.map((song, index) => (
+                            <button key={index}>{song}</button>
                         ))}
-                    </ul>
+                    </div>
                 ) : (
                     <p>Setlist not available at this time.</p>
+                )}
+                {songs.length > itemsPerPage && (
+                    <div className="pager-controls">
+                        <button onClick={goPrevPage} disabled={page === 0}>Prev</button>
+                        <span>Page {page + 1} of {totalPages}</span>
+                        <button onClick={goNextPage} disabled={page >= totalPages - 1}>Next</button>
+                    </div>
                 )}
             </div>
         );

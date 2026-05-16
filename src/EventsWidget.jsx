@@ -1,33 +1,42 @@
 import React from 'react';
 
-function EventsWidget({ events, onPrev, onNext, loading, error }) {
+function EventsWidget({ events, onPrev, onNext, page, totalPages, loading, error }) {
   return (
-    <div id="events-panel" className="panel panel-primary">
+    <div className="panel-body">
       <div className="panel-heading">
         <h3 className="panel-title">Events</h3>
       </div>
-      <div className="panel-body">
+        {loading && <p>Loading...</p>}
         {error && <p>Error: {error}</p>}
-        <div id="events" className="list-group">
+        <div id="events" className="button-grid">
           {events.map((event, index) => (
-            <div key={index} className="list-group-item">
-              <h4 className="list-group-item-heading">{event.name}</h4>
-              <p className="list-group-item-text">{event.dates?.start?.localDate || 'Date not available'}</p>
-              <p className="venue">
+            <button
+              key={index}
+              className="event-btn"
+              onClick={() => {
+                if (!event.url) {
+                  return;
+                }
+                window.open(event.url, '_blank', 'noopener,noreferrer');
+              }}
+              disabled={!event.url}
+              title={event.url ? 'Open on Ticketmaster' : 'Ticketmaster link unavailable'}
+            >
+              <div><strong>{event.name}</strong></div>
+              <div>{event.dates?.start?.localDate || 'Date not available'}</div>
+              <div style={{fontSize: '0.9em', color: '#9aa7ff'}}>
                 {event._embedded?.venues?.[0] ? `${event._embedded.venues[0].name} in ${event._embedded.venues[0].city?.name || ''}` : 'Venue not available'}
-              </p>
-            </div>
+              </div>
+            </button>
           ))}
         </div>
-      </div>
-      <div className="panel-footer">
-        <nav>
-          <ul className="pager">
-            <li id="prev" className="previous"><a href="#" onClick={(e) => { e.preventDefault(); onPrev(); }}><span aria-hidden="true">&larr;</span></a></li>
-            <li id="next" className="next"><a href="#" onClick={(e) => { e.preventDefault(); onNext(); }}><span aria-hidden="true">&rarr;</span></a></li>
-          </ul>
-        </nav>
-      </div>
+        {totalPages > 1 && (
+          <div className="pager-controls">
+            <button onClick={onPrev} disabled={page === 0}>Prev</button>
+            <span>Page {page + 1} of {totalPages}</span>
+            <button onClick={onNext} disabled={page >= totalPages - 1}>Next</button>
+          </div>
+        )}
     </div>
   );
 }

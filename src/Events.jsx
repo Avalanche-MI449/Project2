@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import EventsWidget from './EventsWidget.jsx';
 import './App.css';
 
+const eventsPerPage = 8;
+
 function Events({ artistName }) {
   const [events, setEvents] = useState([]);
   const [page, setPage] = useState(0);
@@ -27,7 +29,7 @@ function Events({ artistName }) {
         if (attractionData._embedded && attractionData._embedded.attractions && attractionData._embedded.attractions.length > 0) {
           const attractionId = attractionData._embedded.attractions[0].id;
           // Now fetch events for this attraction
-          url = `https://app.ticketmaster.com/discovery/v2/events.json?attractionId=${attractionId}&size=4&page=${currentPage}&apikey=${apiKey}`;
+          url = `https://app.ticketmaster.com/discovery/v2/events.json?attractionId=${attractionId}&size=${eventsPerPage}&page=${currentPage}&apikey=${apiKey}`;
         } else {
           setEvents([]);
           setTotalPages(0);
@@ -35,7 +37,7 @@ function Events({ artistName }) {
           return;
         }
       } else {
-        url = `https://app.ticketmaster.com/discovery/v2/events.json?size=4&page=${currentPage}&apikey=${apiKey}`;
+        url = `https://app.ticketmaster.com/discovery/v2/events.json?size=${eventsPerPage}&page=${currentPage}&apikey=${apiKey}`;
       }
       const response = await fetch(url);
       if (!response.ok) {
@@ -54,7 +56,7 @@ function Events({ artistName }) {
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
+  }, [apiKey, eventsPerPage]);
 
   useEffect(() => {
     if (!artistName || !artistName.trim()) {
@@ -70,7 +72,7 @@ function Events({ artistName }) {
 
   useEffect(() => {
     setPage(0);
-  }, [artistName]);
+  }, [artistName, eventsPerPage]);
 
   const handlePrev = () => {
     if (page > 0) {
@@ -94,6 +96,8 @@ function Events({ artistName }) {
         events={events}
         onPrev={handlePrev}
         onNext={handleNext}
+        page={page}
+        totalPages={totalPages}
         loading={loading}
         error={error}
       />
